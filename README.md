@@ -1,20 +1,29 @@
-# COM2042 Lab Assignments Repo
+Dottify
 
-## Getting started
-- Navigate to the repo folder after cloning it
-- Create a virtual environment `python3 -m venv venv`
-- Install the dependencies into the venv by running `python3 -m pip install -r requirements.txt`
+A simple Django app for managing albums, songs, playlists, user profiles, ratings, and comments. Built for COM2042 lab Sheet A with validation rules and unit tests.
 
-The following commands will be run against all submissions:
-- `python3 manage.py compilemessages`, to generate localised strings;
-- `python3 manage.py makemigrations`, to generate migrations, in case they were not supplied;
-- `python3 manage.py migrate`, to perform the migrations to the local database;
-- `python3 manage.py bootstrap`, to insert any starting data into the database (e.g. groups, permissions);
-- `python3 manage.py test`, to run your tests; and,
-- `python3 manage.py runserver`, to run your Django web application.
+Features
 
-## Important
-You should not change anything inside the MusicDBInc folder, nor `requirements.txt`. If you think something is missing, please let us know first.
+Albums with cover image, title, artist name, optional format, retail price, release date, and slug computed from title
 
-## Submitting
-You must commit your work to the `main` branch in your individual Surrey GitLab repository for this module. The last commit on this branch will be marked.
+Songs that belong to albums with auto assigned immutable track positions
+
+Playlists with visibility levels and automatic creation timestamp
+
+DottifyUser profile model that wraps Django’s User
+
+Ratings with half star increments from 0.0 to 5.0
+
+Comments with message text
+
+Test suite for provided cases and extra edge cases
+
+Tech stack
+
+Python 3.13
+
+Django
+
+SQLite for local development
+
+Pytest or Django test runner

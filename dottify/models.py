@@ -6,10 +6,11 @@ from django.utils.text import slugify
 from dateutil.relativedelta import relativedelta  
 from django.db.models import Max 
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 def validate_increments(value: Decimal):
     if value % Decimal("0.5") != 0:
-        raise models.ValidationError("Stars must be a multiple of 0.5.")
+        raise ValidationError("Stars must be a multiple of 0.5.")
     
 def validate_release_date(value: date):
     if value is None:
@@ -17,6 +18,7 @@ def validate_release_date(value: date):
     max_future = date.today() + relativedelta(months=+6)
     if value > max_future:
         raise models.ValidationError("The release dat for unreleased albums can only be 6 months later than the date.")
+
 class DottifyUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     display_name = models.CharField(max_length=800,blank=False)
@@ -28,13 +30,12 @@ album_formats = (
     ("COMP", "Compilation"),
     ("LIVE", "Live Recording"),
 )
+
 class Album(models.Model):
-
-
     cover_image = models.ImageField(
         blank=True,
         null=True,
-        default="default_cover.jpg",  
+        default="no_cover.jpg",  
         help_text="Optional cover art; uses a default image if not provided.",
     )
     title = models.CharField(max_length=800,blank=False)
@@ -61,14 +62,12 @@ class Album(models.Model):
             )
         ]
     
-
     def save(self, *args, **kwargs):
-        
         self.slug = slugify(self.title or "")
         super().save(*args, **kwargs)
 
 class Song(models.Model):
-    album = models.ForeignKey(Album, on_delete=models.CASCADE) #might need to add fuctionality to access all songs from an album here 
+    album = models.ForeignKey(Album, on_delete=models.CASCADE) 
     length = models.PositiveIntegerField(validators=[MinValueValidator(10)],blank=False)
     title = models.CharField(max_length=800)
     position = models.PositiveIntegerField(null=True, blank=True, editable=False)
@@ -79,7 +78,6 @@ class Song(models.Model):
                 fields=["album", "title"],
                 name="unique_Song",
             ),
-           
             models.UniqueConstraint(
                 fields=["album", "position"],
                 name="unique_position_per_album",
@@ -94,10 +92,12 @@ class Song(models.Model):
                 or 0
             )
             self.position = last + 1
+       else:
+            if self.pk is not None:
+                orig = Song.objects.only("position").get(pk=self.pk)
+                self.position = orig.position
        super().save(*args, **kwargs)
 
-
-   
 visibility_choices = (
     (0, "Hidden"),
     (1, "Unlisted"),
@@ -106,11 +106,10 @@ visibility_choices = (
 
 class Playlist(models.Model):
     name = models.CharField(max_length=800,blank=False)
-    created_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
     songs = models.ManyToManyField(Song)
     visibility_level = models.IntegerField(choices=visibility_choices, default=0)
     owner = models.ForeignKey(DottifyUser, on_delete=models.CASCADE)
-
 
 class Rating(models.Model):
     stars = models.DecimalField(max_digits=2, decimal_places=1, validators=[MinValueValidator(Decimal("0.0")), MaxValueValidator(Decimal("5.0")), validate_increments])
